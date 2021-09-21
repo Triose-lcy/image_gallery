@@ -3,6 +3,10 @@ import os
 from werkzeug.utils import secure_filename
 from random import randint
 from myconfig import conf
+import cv2
+import numpy as np
+from libs.object_detection import inference_by_ssd
+
 
 # app = Flask(__name__,
 #             static_url_path="",
@@ -47,12 +51,21 @@ def image_search():
     else:
         file = request.files['file']
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
 
+            img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+            img = img.astype(np.float32)
+
+            filename = secure_filename(file.filename)
             new_filename = str(randint(0, 4)) + "." + filename.split(".")[-1]      # TODO
             abs_image_path = os.path.join(app.config['TMP_FOLDER_ABS'], new_filename)
             rel_image_path = os.path.join(app.config['TMP_FOLDER_REL'], new_filename)
-            file.save(abs_image_path)
+            cv2.imwrite(abs_image_path, img)
+
+            img_resized = cv2.resize(img, (300, 300))
+            img_objs = inference_by_ssd.inference(img_resized, "0.0.0.0:8500")
+            print(img_objs.shape)
+            print(img_objs)
+
             return render_template('image_search.html', filepath=rel_image_path)
         elif not file.filename:
             flash('No file selected')
