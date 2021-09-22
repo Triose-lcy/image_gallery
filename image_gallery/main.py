@@ -1,21 +1,8 @@
-from flask import Flask, flash, request, redirect, url_for, render_template
-import os
-from werkzeug.utils import secure_filename
-from random import randint
 from myconfig import conf
-import cv2
-import numpy as np
-from libs.object_detection import inference_by_ssd
-
-
-# app = Flask(__name__,
-#             static_url_path="",
-#             static_folder="templates/",
-#             template_folder="templates/templates/admin")
-# app.config['TMP_FOLDER_ABS'] = "templates/tmp/"
-# app.config['TMP_FOLDER_REL'] = "tmp/"
-# app.config['IMAGES_FOLDER_ABS'] = "templates/image_repo/"
-# app.config['IMAGES_FOLDER_REL'] = "image_repo/"
+from datetime import datetime
+from libs.image_wrapper import ImageWrapper
+from libs.hdf5_wrapper import Hdf5Wrapper
+from flask import Flask, flash, request, redirect, render_template
 
 
 # load flask app configuration (from myconfig.py)
@@ -24,16 +11,7 @@ app.secret_key = conf["app_secret_key"]
 app.config.update(conf["app_conf"])
 
 
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
 @app.route("/")
-def index_():
-    return render_template("index.html")
-
-
 @app.route("/index")
 def index():
     return render_template("index.html")
@@ -49,30 +27,16 @@ def image_search():
         # first time open the image_search.html page
         return render_template("image_search.html")
     else:
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-
-            img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
-            img = img.astype(np.float32)
-
-            filename = secure_filename(file.filename)
-            new_filename = str(randint(0, 4)) + "." + filename.split(".")[-1]      # TODO
-            abs_image_path = os.path.join(app.config['TMP_FOLDER_ABS'], new_filename)
-            rel_image_path = os.path.join(app.config['TMP_FOLDER_REL'], new_filename)
-            cv2.imwrite(abs_image_path, img)
-
-            img_resized = cv2.resize(img, (300, 300))
-            img_objs = inference_by_ssd.inference(img_resized, "0.0.0.0:8500")
-            print(img_objs.shape)
-            print(img_objs)
-
-            return render_template('image_search.html', filepath=rel_image_path)
-        elif not file.filename:
-            flash('No file selected')
+        img_wrapper = ImageWrapper()
+        img_wrapper_valid = img_wrapper.build_from_filestorage(request.files['file'])
+        if not img_wrapper_valid:
+            flash("Read image error")
             return redirect(request.url)
         else:
-            flash('Allowed image types are - png, jpg, jpeg, gif')
-            return redirect(request.url)
+            uploaded_filestream = img_wrapper.to_b64()
+            if not uploaded_filestream:
+                flash("Image load error")
+            return render_template("image_search.html", uploaded_filestream=uploaded_filestream)
 
 
 @app.route("/image_upload", methods=['POST', 'GET'])
@@ -85,11 +49,21 @@ def image_upload():
 
         files = request.files.getlist('files[]')
         valid_file_cnt = 0
+
+        h5_writer = Hdf5Wrapper(_h5_path=conf["image_repo_path"])
+        h5_writer.init_handler(mode='a')
+
         for file in files:
-            if file and allowed_file(file.filename):
-                valid_file_cnt += 1
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['IMAGES_FOLDER_ABS'], filename))
+            # %Y%m%d%H%M%S
+            img_wrapper = ImageWrapper()
+            if img_wrapper.build_from_filestorage(file):
+                # Avoid duplicated name of different images
+                # TODO: remove same images with same or different name(s)
+                img_wrapper.set_filename(_filename=img_wrapper.get_filename() + "_" + datetime.now().strftime('%Y%m%d%H%M%S'))
+                res = h5_writer.write_image_wrapper_into_group(group_name="raw_images", img_wrapper=img_wrapper)
+                valid_file_cnt += res if res is not None else 0
+
+        h5_writer.free_handler()
 
         flash("Uploaded " + str(valid_file_cnt) + " image(s)")
         return redirect(request.url)

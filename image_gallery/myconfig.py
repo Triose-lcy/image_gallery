@@ -16,15 +16,9 @@ conf_dev["app_conf"] = {
     "IMAGES_FOLDER_ABS": "templates/image_repo/",
     "IMAGES_FOLDER_REL": "image_repo/"
 }
-
-
-
+conf_dev["image_repo_path"] = "./hdf5/image_repo.h5"
 
 # Configuration of deployment
-
-
-
-
 
 
 conf = conf_dev if not os.environ.get("DEPLOYMENT", None) else conf_prod

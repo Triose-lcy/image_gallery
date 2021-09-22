@@ -251,8 +251,9 @@ License: You must have a valid license purchased only from themeforest(the above
 <!--											<img src="../../assets/admin/pages/media/search/1.jpg" class="img-responsive" alt="">-->
 <!--											<img src="{{url_for('static', filename='assets/admin/pages/media/search/1.jpg')}}" class="img-responsive" alt="">-->
 
-											{% if filepath %}
-												<img src="{{url_for('static', filename=filepath)}}" class="img-responsive" alt="">
+											{% if uploaded_filestream %}
+<!--												<img src="{{url_for('static', filename=filepath)}}" class="img-responsive" alt="">-->
+												<img src="data:;base64,{{uploaded_filestream}}" class="img-responsive" alt="">
 											{% else %}
 												<img src="{{url_for('static', filename='assets/admin/pages/media/search/1.jpg')}}" class="img-responsive" alt="">
 											{% endif %}
