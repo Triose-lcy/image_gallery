@@ -8,9 +8,7 @@ Developer Intern Challenge Question`.
 
 ## Run and Test (developing mode rather than production)
 ``` bash
-# python 3.7
-pip install -r requirements.txt
-python main.py
+docker run -it -p 5000:5000 --rm triose/image_gallary:v1
 ```
 
 
