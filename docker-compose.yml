@@ -1,0 +1,25 @@
+version: "3.0"
+services:
+  image_gallery:
+    image: triose/image_gallary:v2
+    ports:
+      - "5000:5000"
+    depends_on:
+      - "nlp"
+      - "ssd"
+    environment:
+      app_secret_key: prod_secret_key
+      ssd_service_url: ssd:8500
+      nlp_service_url: http://nlp:5000/get_nlp_feature
+      DEPLOYMENT: 1
+    tty: True
+  nlp:
+    image: triose/nlp_feature_generator:v1
+    ports: 
+      - "5001:5000"
+  ssd:
+    image: triose/tfs_ssd:v1
+    ports:
+      - "8500:8500"
+
+  

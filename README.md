@@ -4,27 +4,29 @@ This project is built for `Winter 2022 - Shopify
 Developer Intern Challenge Question`.  
 
 
-**Almost done!**  
-**I'll update a `docker-compose` file to let you deploy the whole system easily.`(Before 23:59 PM Sep 24 2021, Ottawa time)`** 
+**docker-compose done!**  
 
-## Run and Test (developing mode rather than production)
+## Run and Test
 ``` bash
-docker run -it -p 5000:5000 --rm triose/image_gallary:v1
+# All images needed were uploaded by me.
+# Copy the docker-compose.yaml and run 
+docker-compose up -d
 ```
 
 
 `TODO`  
 - [x] Frontend pages design and implementation
 - [x] File upload, save, display
-- [x] Build docker image for tensorflow model server serving a SSD300 model
+- [x] Build docker image for tensorflow model server serving a SSD300 model  
 - [x] Object detection model inference functions
 - [x] Used HDF5 to store images
 - [x] image feature extraction process when images are uploaded
 - [x] NLP word2vec to implement image text searching 
 - [x] Examples in README.md
-- [ ] Multiple threads in production environment
+- [x] Docker image for deployment 
+- [ ] Multiple threads/async image upload
 - [ ] Code comments and beautify
-- [ ] Docker image for deployment and document
+- [ ] Detail document
 - [ ] Optimization
 
 
